@@ -11,14 +11,16 @@ class altBit(RDT):
         
     def resend(self):
         self.send_pkt(self.pkt_send)
+        self.add_send_time(1)
     
     def send(self, content: bytes) -> None:   
         pkt_num = self.get_pkt_num(content)
-        print(f"Total Pkt Num = {pkt_num}")
+        self.inform(f"Total Pkt Num = {pkt_num}")
         offset = 0
         
         for i in range(pkt_num):
-            print(f"Sending Pkt Num = {i+1}")
+            self.inform(f"Sending Pkt Num = {i+1}")
+            self.add_send_time(1)  
             self.pkt_send = self.make_pkt(self.state, -1, pkt_num - i - 1, content[offset:offset+self.MSS])
             self.send_pkt(self.pkt_send)
             self.start_timer()
@@ -26,14 +28,18 @@ class altBit(RDT):
             self.stop_timer()
             
             if(self.check_pkt(pkt_recv) and self.is_ack(pkt_recv, self.state)):
-                print(f"Recv Right ACK{self.state}")
+                self.inform(f"Recv Right ACK{self.state}")
+                self.add_success_time(1)
                 self.change_state()    
             else:
-                print(f"Recv Wrong ACK, resend Seq{self.state}")
+                self.inform(f"Recv Wrong ACK, resend Seq{self.state}")
                 self.resend()
                 self.start_timer()
                 
             offset += self.MSS
+        
+        if(self.Test_mode):
+            self.print_test_result()
             
     def recv(self) -> list:
         result = None

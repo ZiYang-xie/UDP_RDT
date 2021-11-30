@@ -16,7 +16,7 @@ def set_network(bw, delay, loss):
 if __name__ == "__main__":
     bw = 0
     delay = 0
-    loss = 0.01
+    loss = 0.05
     if(sys.argv[1] == 'set'):
         set_network(bw, delay, loss)
         set_rules("./simulator/udp_rule")

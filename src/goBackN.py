@@ -33,6 +33,7 @@ class goBackN(RDT):
         idx = left
         while(idx != right):
             pkt_send = self.sender_buffer[idx]
+            self.add_send_time(1)
             self.send_pkt(pkt_send)
             idx += 1
             
@@ -40,43 +41,45 @@ class goBackN(RDT):
         self.send_range(self.left_side, self.right_side)
         
     def send(self, content: bytes) -> None:   
-        assert(len(self.sender_buffer) == 0)
         self.pkt_num = self.get_pkt_num(content)
         self.right_side = min(self.left_side + self.window_len, self.pkt_num)
-        print(f"Total Pkt Num = {self.pkt_num}")
+        self.inform(f"Total Pkt Num = {self.pkt_num}")
         self.save_to_buffer(self.pkt_num, content)
         
         self.send_range(self.left_side, self.right_side)
         self.start_timer()
         
-        self.idx = 1
         while(self.left_side != self.right_side):
             pkt_recv = self.recv_pkt()
         
             if(self.check_pkt(pkt_recv) and self.is_ack(pkt_recv)):
+                self.inform(f"Recv Right ACK{pkt_recv['ACK_N']}")
                 self.stop_timer()    
-                print(f"Recv Right ACK{pkt_recv['ACK_N']}")
                 step = (pkt_recv['ACK_N'] - self.seq_n) % self.UPPER_N
-                if(self.right_side != self.pkt_num):
+                if(step):
+                    self.add_success_time(step)
                     send_step = min(step, self.pkt_num - self.right_side)
                     self.send_range(self.right_side, self.right_side + send_step)
                     self.start_timer()
-                self.change_state(step)
+                    self.change_state(step)
             else:
-                print(f"Recv Wrong ACK{pkt_recv['ACK_N']}, Dropping")
+                self.inform(f"Recv Wrong ACK{pkt_recv['ACK_N']}, Dropping")
+                
+        if(self.Test_mode):
+            self.print_test_result()
         
     def recv(self) -> list:
         result = None
         while(result is None):
             pkt_recv = self.recv_pkt()
             if(self.check_pkt(pkt_recv) and self.is_seq(pkt_recv, self.ack_n)):
-                print(f"Recv Right Seq{pkt_recv['SEQ_N']}")
+                self.inform(f"Recv Right Seq{pkt_recv['SEQ_N']}")
                 self.send_ack(pkt_recv['SEQ_N'])
                 self.ack_n = (self.ack_n + 1) % self.UPPER_N 
                 result = [pkt_recv]
             else:
                 last_ack = (self.ack_n - 1) % self.UPPER_N 
-                print(f"Recv Wrong Seq{pkt_recv['SEQ_N']}, resend ACK{last_ack}")
+                self.inform(f"Recv Wrong Seq{pkt_recv['SEQ_N']}, resend ACK{last_ack}")
                 self.send_ack(last_ack)
                 
         return result

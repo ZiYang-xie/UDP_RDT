@@ -37,12 +37,15 @@ class selRepeat(RDT):
         idx = left
         while(idx != right):
             pkt_send = self.sender_buffer[idx]
+            self.add_send_time(1)
             self.send_pkt(pkt_send)
             idx += 1
+        
             
     def resend(self):
         resend_pkt = self.sender_buffer[self.left_side]
         self.send_pkt(resend_pkt)
+        self.add_send_time(1)
         
     def mark_pkt(self, buffer, offset):
         buffer[offset] = 1
@@ -57,7 +60,7 @@ class selRepeat(RDT):
         assert(len(self.sender_buffer) == 0)
         self.pkt_num = self.get_pkt_num(content)
         self.right_side = min(self.left_side + self.window_len, self.pkt_num)
-        print(f"Total Pkt Num = {self.pkt_num}")
+        self.inform(f"Total Pkt Num = {self.pkt_num}")
         self.save_to_buffer(self.pkt_num, content)
         
         self.send_range(self.left_side, self.right_side)
@@ -67,13 +70,13 @@ class selRepeat(RDT):
             pkt_recv = self.recv_pkt()
         
             if(self.check_pkt(pkt_recv) and self.is_ack(pkt_recv)):
-                
-                print(f"Recv Right ACK{pkt_recv['ACK_N']}")
+                self.inform(f"Recv Right ACK{pkt_recv['ACK_N']}")
                 offset = (pkt_recv['ACK_N'] - self.seq_n - 1) % self.window_len
                 self.mark_pkt(self.sender_mark, offset)
                 step = self.get_window_shift(self.sender_mark)
                 
                 if(step):
+                    self.add_success_time(step)
                     self.stop_timer()
                     send_step = min(step, self.pkt_num - self.right_side)
                     self.send_range(self.right_side, self.right_side + send_step)
@@ -82,14 +85,17 @@ class selRepeat(RDT):
                     self.change_state(step)
                 
             else:
-                print(f"Recv Wrong ACK{pkt_recv['ACK_N']}, Dropping")
+                self.inform(f"Recv Wrong ACK{pkt_recv['ACK_N']}, Dropping")
+                
+        if(self.Test_mode):
+            self.print_test_result()
                 
     def recv(self) -> list:
         result = None
         while(result is None):
             pkt_recv = self.recv_pkt()
             if(self.check_pkt(pkt_recv) and (self.pkg_unreceived == None or pkt_recv['PKG_LEN'] <= self.pkg_unreceived)):
-                print(f"Recv Right Seq{pkt_recv['SEQ_N']}")
+                self.inform(f"Recv Right Seq{pkt_recv['SEQ_N']}")
                 self.send_ack(pkt_recv['SEQ_N'])
                 
                 if(self.pkg_unreceived is None):
@@ -109,7 +115,7 @@ class selRepeat(RDT):
                     self.receiver_buffer = self.receiver_buffer[step:] + [0]*step
                 
             else: 
-                print(f"Recv Wrong Seq{pkt_recv['SEQ_N']}, resend ACK{pkt_recv['SEQ_N']}")
+                self.inform(f"Recv Wrong Seq{pkt_recv['SEQ_N']}, resend ACK{pkt_recv['SEQ_N']}")
                 self.send_ack(pkt_recv['SEQ_N'])
                 
         return result

@@ -1,6 +1,7 @@
 from template import build_template
 from utils import check_args, PORTOCOL
 import sys
+import time
 
 def build_sender(portocol):
     class Sender(build_template(portocol)):
@@ -24,8 +25,10 @@ if __name__ == "__main__":
     
     with open('./data/send_file/large', 'rb') as f:
         data = f.read()
-        
+
+    time_start=time.time()
     sender.Send(data)
-    print("[Send Done]")
-    sender.stop_timer()
+    time_end=time.time()
+    
+    print(f"[Send Done] Time: {time_end-time_start} s")
     sender.close()
