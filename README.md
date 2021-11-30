@@ -16,7 +16,7 @@
 
 ### 2.1 **继承架构图**
 
-<img src="https://tva1.sinaimg.cn/large/008i3skNgy1gwxgfqn9bxj30ri0ngwg3.jpg" style="zoom:50%;" />
+<img src="https://tva1.sinaimg.cn/large/008i3skNgy1gwxgfqn9bxj30ri0ngwg3.jpg" style="zoom:30%;" />
 
 ### 2.2 使用方式
 
