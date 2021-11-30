@@ -1,0 +1,2 @@
+dummynet in proto udp from any to any pipe 1   
+dummynet out proto udp from any to any pipe 1
