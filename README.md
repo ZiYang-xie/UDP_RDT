@@ -1,9 +1,5 @@
 # 计网传输层 - 可靠传输协议实验2
 
-*谢子飏 19307130037*
-
-*代码连接：[ZiYang-xie/UDP_RDT: Reliable Data Transmission implemented on UDP (github.com)](https://github.com/ZiYang-xie/UDP_RDT)*
-
 ## 1. 实验简介
 
 ​	本次实验和上次实验基本类似，不同之处是上次实验是模拟的传输环境，而这次需要在真实的UDP传输基础之上实现 RDT。和上次实验一样分别实现 RDT3.0 / GoBackN / Selective Repeat
